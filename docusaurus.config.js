@@ -78,7 +78,7 @@ async function createConfig() {
         // ── Force dark mode; remove the toggle ──────────────────
         colorMode: {
           defaultMode: 'dark',
-          disableSwitch: false,
+          disableSwitch: true,
           respectPrefersColorScheme: false,
         },
 
@@ -86,46 +86,26 @@ async function createConfig() {
 
         navbar: {
           title: 'ETS Portfolio',
-          logo: {
-            alt: 'ETS Logo',
-            src: 'img/logo.svg',
-          },
           items: [
+            { href: '/#projects', label: 'Projects', position: 'left' },
+            { href: '/#skills', label: 'Systems', position: 'left' },
+            { href: '/#pubs', label: 'Research', position: 'left' },
+            { href: '/#experience', label: 'Log', position: 'left' },
+            { href: '/#certs', label: 'Achievements', position: 'left' },
+            { href: '/#contact', label: 'Contact', position: 'left' },
             {
-              type: 'docSidebar',
-              sidebarId: 'tutorialSidebar',
-              position: 'left',
-              label: 'Docs',
-            },
-            { to: '/blog', label: 'Blog', position: 'left' },
-            {
-              href: 'https://github.com/123sashank321/ets_portfolio',
-              label: 'GitHub',
+              href: '/Resume_1.pdf',
+              label: '↓ CV',
               position: 'right',
+              className: 'nav-cv-btn',
             },
           ],
         },
 
         footer: {
           style: 'dark',
-          links: [
-            {
-              title: 'Docs',
-              items: [
-                { label: 'Introduction', to: '/docs/intro' },
-              ],
-            },
-            {
-              title: 'Connect',
-              items: [
-                {
-                  label: 'GitHub',
-                  href: 'https://github.com/123sashank321',
-                },
-              ],
-            },
-          ],
-          copyright: `Copyright © ${new Date().getFullYear()} ETS Portfolio. Built with Docusaurus.`,
+          links: [],
+          copyright: `© ${new Date().getFullYear()} Sashank Erukala · ETS Portfolio`,
         },
 
         prism: {

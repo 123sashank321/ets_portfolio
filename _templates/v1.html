@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DRONE OPS — Aerial Robotics Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#030a0f;--surface:#060f18;--panel:rgba(0,200,255,0.04);
+  --cyan:#00c8ff;--cyan-dim:rgba(0,200,255,0.15);
+  --amber:#ffb800;--amber-dim:rgba(255,184,0,0.12);
+  --red:#ff3a3a;--green:#00ff88;
+  --text:#c8e8f0;--muted:#4a7a8a;
+  --border:rgba(0,200,255,0.2);--border-amber:rgba(255,184,0,0.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;font-weight:300;overflow-x:hidden;cursor:crosshair}
+
+/* ═ BOOT ═ */
+#boot{position:fixed;inset:0;z-index:9000;background:#030a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;transition:opacity 0.8s ease}
+#boot.done{opacity:0;pointer-events:none}
+.boot-logo{font-family:'Orbitron',monospace;font-weight:900;font-size:2.5rem;color:var(--cyan);letter-spacing:0.3em;text-shadow:0 0 30px rgba(0,200,255,0.5)}
+.boot-lines{font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted);letter-spacing:0.15em;text-align:left;width:360px;line-height:1.9}
+.boot-line{opacity:0;transform:translateX(-6px);transition:opacity 0.25s,transform 0.25s}
+.boot-line.show{opacity:1;transform:none}
+.boot-line .ok{color:var(--green)}.boot-line .warn{color:var(--amber)}
+.boot-bar-wrap{width:360px}
+.boot-bar-label{font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.2em;margin-bottom:0.4rem;display:flex;justify-content:space-between}
+.boot-bar{height:3px;background:rgba(0,200,255,0.1);overflow:hidden}
+.boot-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),rgba(0,200,255,0.5));transition:width 0.08s linear;box-shadow:0 0 8px var(--cyan)}
+
+/* ═ SCROLL BAR ═ */
+#scrollBar{position:fixed;top:0;left:0;height:2px;width:0%;background:linear-gradient(90deg,var(--cyan),var(--amber));z-index:200;box-shadow:0 0 8px var(--cyan)}
+
+/* ═ BG ═ */
+.grid-bg{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(0,200,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.03) 1px,transparent 1px);background-size:60px 60px;animation:gridDrift 20s linear infinite}
+@keyframes gridDrift{from{background-position:0 0}to{background-position:60px 60px}}
+#particleCanvas{position:fixed;inset:0;z-index:1;pointer-events:none}
+.scanline{position:fixed;inset:0;z-index:2;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px)}
+.vignette{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.65) 100%)}
+.cursor-dot{position:fixed;width:6px;height:6px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;box-shadow:0 0 12px var(--cyan)}
+
+/* ═ NAV ═ */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3rem;border-bottom:1px solid var(--border);background:rgba(3,10,15,0.88);backdrop-filter:blur(14px)}
+.nav-logo{font-family:'Orbitron',monospace;font-weight:900;font-size:1.05rem;color:var(--cyan);letter-spacing:0.25em;text-decoration:none;display:flex;align-items:center;gap:0.6rem}
+.nav-logo .dot{width:8px;height:8px;background:var(--amber);border-radius:50%;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.nav-links{display:flex;gap:1.8rem;list-style:none;align-items:center}
+.nav-links a{font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:var(--muted);text-decoration:none;letter-spacing:0.15em;text-transform:uppercase;transition:color 0.3s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--cyan);transition:width 0.3s}
+.nav-links a:hover{color:var(--cyan)}.nav-links a:hover::after{width:100%}
+.nav-links .nav-resume{color:var(--amber);border:1px solid var(--border-amber);padding:0.35rem 0.9rem;background:var(--amber-dim);clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,0 100%);transition:all 0.3s}
+.nav-links .nav-resume:hover{background:rgba(255,184,0,0.22);border-color:var(--amber);box-shadow:0 0 14px rgba(255,184,0,0.3)}
+.nav-links .nav-resume::after{display:none}
+.nav-right{display:flex;align-items:center;gap:1.5rem}
+.nav-status{font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:var(--muted);display:flex;align-items:center;gap:0.4rem}
+.status-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1.5s ease-in-out infinite}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:22px;height:2px;background:var(--cyan);transition:all 0.3s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;background:rgba(3,10,15,0.97);border-bottom:1px solid var(--border);z-index:99;padding:1.5rem 2rem;flex-direction:column;gap:1.2rem;backdrop-filter:blur(14px)}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--muted);text-decoration:none;letter-spacing:0.2em;text-transform:uppercase;padding:0.5rem 0;border-bottom:1px solid var(--border);transition:color 0.3s}
+.mobile-menu a:hover{color:var(--cyan)}
+
+/* ═ BUTTONS ═ */
+.btn{font-family:'Share Tech Mono',monospace;font-size:0.73rem;letter-spacing:0.18em;text-transform:uppercase;text-decoration:none;padding:0.85rem 1.8rem;border:1px solid var(--border);color:var(--cyan);background:var(--cyan-dim);transition:all 0.3s;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));cursor:pointer;display:inline-flex;align-items:center;gap:0.5rem}
+.btn:hover{background:rgba(0,200,255,0.25);border-color:var(--cyan);box-shadow:0 0 20px rgba(0,200,255,0.3)}
+.btn-amber{color:var(--amber);border-color:var(--border-amber);background:var(--amber-dim)}
+.btn-amber:hover{background:rgba(255,184,0,0.22);border-color:var(--amber);box-shadow:0 0 20px rgba(255,184,0,0.3)}
+.btn-ghost{color:var(--muted);border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.03)}
+.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
+
+/* ═ HERO ═ */
+.hero{position:relative;z-index:10;min-height:100vh;display:flex;align-items:center;padding:7rem 3rem 3rem;overflow:hidden;gap:2rem}
+.hero-content{flex:0 0 auto;max-width:500px;position:relative;z-index:2}
+.hero-right{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;position:relative}
+.hero-label{font-family:'Share Tech Mono',monospace;font-size:0.68rem;letter-spacing:0.4em;color:var(--amber);text-transform:uppercase;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.8rem;opacity:0;animation:fadeUp 0.6s ease forwards 0.3s}
+.hero-label::before{content:'//';color:var(--muted)}
+.hero-name{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(2.8rem,6.5vw,5.5rem);line-height:0.95;color:#fff;letter-spacing:-0.02em;opacity:0;animation:fadeUp 0.7s ease forwards 0.5s}
+.hero-name span{color:var(--cyan);display:block}
+.hero-roles-wrap{font-family:'Share Tech Mono',monospace;font-size:0.85rem;letter-spacing:0.25em;text-transform:uppercase;margin-top:1.5rem;opacity:0;animation:fadeUp 0.7s ease forwards 0.8s;display:flex;align-items:center;gap:0.5rem}
+.hero-roles-wrap .prefix{color:var(--muted)}
+#typewriterRole{color:var(--cyan);min-width:240px}
+#typewriterRole::after{content:'|';animation:blink 0.8s step-end infinite;color:var(--amber)}
+@keyframes blink{50%{opacity:0}}
+.hero-desc{font-size:0.98rem;line-height:1.85;color:var(--text);margin-top:2rem;opacity:0;animation:fadeUp 0.7s ease forwards 1s}
+.hero-cta{display:flex;gap:0.8rem;margin-top:2.5rem;flex-wrap:wrap;opacity:0;animation:fadeUp 0.7s ease forwards 1.2s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═ VTOL DRONE ═ */
+.drone-vtol-wrap{
+  position:relative;
+  width:520px; height:360px;
+  opacity:0;
+  animation:fadeUp 1s ease forwards 1.4s, droneHover 5s ease-in-out 2.5s infinite;
+  flex-shrink:0;
+}
+@keyframes droneHover{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.drone-vtol-wrap svg{width:100%;height:100%;overflow:visible}
+
+/* Mode badge */
+.mode-badge{
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.25em;
+  color:var(--cyan);background:rgba(3,10,15,0.85);border:1px solid var(--border);
+  padding:0.25rem 0.75rem;white-space:nowrap;pointer-events:none;
+}
+
+/* ═ RADAR ═ */
+.radar-interactive-wrap{position:relative;opacity:0;animation:fadeUp 0.8s ease forwards 1.6s}
+#radarCanvas{display:block;border-radius:50%}
+.radar-tooltip,.tech-node-tooltip{position:fixed;background:rgba(3,10,15,0.96);border:1px solid var(--cyan);padding:0.5rem 0.9rem;font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--cyan);pointer-events:none;z-index:500;display:none;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%);white-space:nowrap}
+.radar-tooltip .tt-type{color:var(--muted);font-size:0.6rem;margin-top:2px}
+.tech-node-tooltip .tn-name{font-family:'Orbitron',monospace;font-size:0.8rem;color:#fff}
+.tech-node-tooltip .tn-cat{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--muted);margin-top:3px}
+.tech-node-tooltip .tn-level{font-family:'Share Tech Mono',monospace;font-size:0.65rem;margin-top:6px}
+
+/* ═ SECTIONS ═ */
+section{position:relative;z-index:10;padding:6rem 3rem;max-width:1200px;margin:0 auto}
+.section-label{font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.5em;text-transform:uppercase;color:var(--amber);margin-bottom:0.5rem}
+.section-title{font-family:'Orbitron',monospace;font-weight:700;font-size:clamp(1.8rem,4vw,2.6rem);color:#fff;margin-bottom:3rem;position:relative;display:inline-block}
+.section-title::after{content:'';position:absolute;left:0;bottom:-10px;width:60px;height:2px;background:linear-gradient(90deg,var(--cyan),transparent)}
+.divider{position:relative;z-index:10;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 3rem}
+
+/* ═ STATS ═ */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);position:relative;z-index:10;max-width:1200px;margin:0 auto}
+.stat{background:var(--surface);padding:2.2rem 2rem;text-align:center;position:relative;overflow:hidden;transition:background 0.3s;cursor:default}
+.stat:hover{background:var(--panel)}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity 0.3s}
+.stat:hover::before{opacity:1}
+.stat-num{font-family:'Orbitron',monospace;font-weight:900;font-size:2.8rem;color:var(--cyan);line-height:1;display:block}
+.stat-label{font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--muted);margin-top:0.4rem}
+
+/* ═ PROJECTS ═ */
+.projects-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.project-card{background:var(--surface);border:1px solid var(--border);overflow:hidden;position:relative;transition:border-color 0.3s,transform 0.3s;clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,0 100%)}
+.project-card:hover{border-color:var(--cyan);transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,200,255,0.1)}
+.project-card.featured{grid-column:span 2;clip-path:polygon(0 0,calc(100% - 28px) 0,100% 28px,100% 100%,0 100%)}
+.card-visual{height:200px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.project-card.featured .card-visual{height:260px}
+.card-tag{position:absolute;top:1rem;left:1rem;font-family:'Share Tech Mono',monospace;font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;padding:0.3rem 0.7rem;border:1px solid var(--border-amber);color:var(--amber);background:rgba(255,184,0,0.08)}
+.card-body{padding:1.5rem}
+.card-id{font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.2em;margin-bottom:0.5rem}
+.card-title{font-family:'Orbitron',monospace;font-weight:600;font-size:0.95rem;color:#fff;margin-bottom:0.75rem;line-height:1.3}
+.card-desc{font-size:0.84rem;line-height:1.7;color:var(--muted)}
+.card-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:0.5rem;flex-wrap:wrap}
+.tag{font-family:'Share Tech Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;padding:0.25rem 0.6rem;background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--border)}
+.hud-corner{position:absolute;width:20px;height:20px;pointer-events:none}
+.hud-corner.tl{top:0;left:0;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+.hud-corner.tr{top:0;right:0;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+.hud-corner.bl{bottom:0;left:0;border-bottom:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+.hud-corner.br{bottom:0;right:0;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+
+/* ═ TECH GRAPH ═ */
+#techCanvas{display:block;width:100%;height:540px;cursor:default}
+.tech-legend{display:flex;gap:2rem;margin-bottom:2rem;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:0.5rem;font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+
+/* ═ PUBLICATIONS ═ */
+.pub-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}
+.pub-card{background:var(--surface);border:1px solid var(--border);padding:1.5rem;position:relative;overflow:hidden;transition:border-color 0.3s,transform 0.3s}
+.pub-card:hover{border-color:rgba(0,200,255,0.4);transform:translateY(-2px)}
+.pub-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--cyan),transparent)}
+.pub-year{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--amber);letter-spacing:0.2em;margin-bottom:0.5rem}
+.pub-title{font-family:'Exo 2',sans-serif;font-weight:600;font-size:0.95rem;color:#fff;line-height:1.4;margin-bottom:0.5rem}
+.pub-venue{font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted);margin-bottom:0.75rem}
+.pub-tags{display:flex;gap:0.4rem;flex-wrap:wrap}
+.pub-tag{font-family:'Share Tech Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;padding:0.2rem 0.5rem;background:rgba(0,200,255,0.06);color:var(--cyan);border:1px solid var(--border)}
+
+/* ═ TIMELINE ═ */
+.timeline{position:relative;padding-left:2rem}
+.timeline::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,var(--cyan),transparent)}
+.timeline-item{position:relative;margin-bottom:2.5rem;padding-left:2rem}
+.timeline-item::before{content:'';position:absolute;left:-2rem;top:0.4rem;width:8px;height:8px;background:var(--cyan);border:2px solid var(--bg);border-radius:50%;box-shadow:0 0 10px var(--cyan)}
+.timeline-date{font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.2em;color:var(--amber);margin-bottom:0.3rem}
+.timeline-role{font-family:'Orbitron',monospace;font-weight:600;font-size:0.92rem;color:#fff;margin-bottom:0.2rem}
+.timeline-org{font-size:0.84rem;color:var(--muted)}
+
+/* ═ CONTACT ═ */
+.contact-panel{border:1px solid var(--border);padding:3rem;background:var(--surface);display:grid;grid-template-columns:1fr 1fr;gap:3rem;clip-path:polygon(0 0,calc(100% - 30px) 0,100% 30px,100% 100%,30px 100%,0 calc(100% - 30px))}
+.contact-link{display:flex;align-items:center;gap:1rem;padding:1rem;border:1px solid var(--border);color:var(--text);text-decoration:none;font-family:'Share Tech Mono',monospace;font-size:0.78rem;transition:all 0.3s;margin-bottom:0.75rem}
+.contact-link:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);padding-left:1.5rem}
+.link-icon{width:36px;height:36px;background:var(--panel);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+/* Resume download strip in contact */
+.dl-strip{display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+.dl-strip a{font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;text-decoration:none;padding:0.6rem 1.2rem;border:1px solid var(--border);color:var(--amber);background:var(--amber-dim);transition:all 0.3s;display:inline-flex;align-items:center;gap:0.4rem}
+.dl-strip a:hover{background:rgba(255,184,0,0.22);border-color:var(--amber);box-shadow:0 0 14px rgba(255,184,0,0.25)}
+.dl-strip a.ghost{color:var(--muted);border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.03)}
+.dl-strip a.ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
+
+/* ═ FOOTER ═ */
+footer{position:relative;z-index:10;text-align:center;padding:2rem;border-top:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.2em;color:var(--muted)}
+
+/* ═ RESPONSIVE ═ */
+@media(max-width:1050px){
+  nav{padding:1rem 1.5rem}.nav-links{display:none}.hamburger{display:flex}
+  .hero{flex-direction:column;padding-top:8rem;gap:1.5rem}
+  .drone-vtol-wrap{width:360px;height:260px}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .projects-grid{grid-template-columns:1fr}
+  .project-card.featured{grid-column:span 1}
+  .pub-grid{grid-template-columns:1fr}
+  .contact-panel{grid-template-columns:1fr}
+  section{padding:4rem 1.5rem}.divider{margin:0 1.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- BOOT -->
+<div id="boot">
+  <div class="boot-logo">DRONE OPS</div>
+  <div class="boot-lines" id="bootLines"></div>
+  <div class="boot-bar-wrap">
+    <div class="boot-bar-label"><span id="bootBarLabel">INITIALIZING</span><span id="bootPct">0%</span></div>
+    <div class="boot-bar"><div class="boot-bar-fill" id="bootFill"></div></div>
+  </div>
+</div>
+
+<div id="scrollBar"></div>
+<div class="grid-bg"></div>
+<canvas id="particleCanvas"></canvas>
+<div class="scanline"></div>
+<div class="vignette"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="radar-tooltip" id="radarTooltip"><div id="ttName">—</div><div class="tt-type" id="ttType">—</div></div>
+<div class="tech-node-tooltip" id="techTooltip"><div class="tn-name" id="tnName"></div><div class="tn-cat" id="tnCat"></div><div class="tn-level" id="tnLevel"></div></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo"><div class="dot"></div>DRONE OPS</a>
+  <ul class="nav-links">
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#skills">Systems</a></li>
+    <li><a href="#pubs">Research</a></li>
+    <li><a href="#experience">Log</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="your-resume.pdf" download class="nav-resume">↓ CV</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="nav-status"><div class="status-dot"></div>SYS ONLINE</div>
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#projects" onclick="closeMobile()">Projects</a>
+  <a href="#skills" onclick="closeMobile()">Systems</a>
+  <a href="#pubs" onclick="closeMobile()">Research</a>
+  <a href="#experience" onclick="closeMobile()">Log</a>
+  <a href="#contact" onclick="closeMobile()">Contact</a>
+  <a href="your-resume.pdf" download>↓ Download CV</a>
+</div>
+
+<!-- ═════ HERO ═════ -->
+<section class="hero" style="max-width:100%;padding-bottom:2rem;">
+  <div class="hero-content">
+    <div class="hero-label">Aerial Robotics Portfolio</div>
+    <h1 class="hero-name">Your Name<span>Here</span></h1>
+    <div class="hero-roles-wrap">
+      <span class="prefix">//</span>
+      <span id="typewriterRole"></span>
+    </div>
+    <p class="hero-desc">Designing, building, and deploying autonomous aerial systems at the intersection of robotics, embedded systems, and machine perception. Based on Earth — operating everywhere above it.</p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn">View Projects</a>
+      <a href="#contact" class="btn btn-amber">Get In Touch</a>
+      <a href="your-resume.pdf" download class="btn btn-ghost">↓ Download CV</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+
+    <!-- ══════════ VTOL HOLOGRAPHIC DRONE ══════════ -->
+    <div class="drone-vtol-wrap">
+      <div class="mode-badge" id="modeBadge">MODE: HOVER · TILT: 0°</div>
+      <svg id="vtolDrone" viewBox="-40 -55 580 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="glw" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glwStr" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="gndGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(0,200,255,0.18)"/>
+            <stop offset="70%" stop-color="rgba(0,200,255,0.04)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+          <radialGradient id="scanGrad" cx="50%" cy="0%" r="100%">
+            <stop offset="0%" stop-color="rgba(255,184,0,0.18)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+          <linearGradient id="bodyFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgba(0,60,90,0.55)"/>
+            <stop offset="100%" stop-color="rgba(0,20,35,0.45)"/>
+          </linearGradient>
+          <linearGradient id="wingFill" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="rgba(0,200,255,0.07)"/>
+            <stop offset="100%" stop-color="rgba(0,80,120,0.04)"/>
+          </linearGradient>
+          <linearGradient id="nacelleFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0d3045"/>
+            <stop offset="100%" stop-color="#061520"/>
+          </linearGradient>
+          <!-- Clip path for body ribs -->
+          <clipPath id="bodyClip">
+            <path d="M490,193 C468,177 435,162 398,156 C368,151 335,149 308,150 C278,151 245,156 215,163 C185,170 158,179 138,188 C130,191 126,194 130,197 C150,206 182,217 215,224 C245,230 278,234 308,233 C335,232 368,228 398,220 C435,212 468,203 490,197 Z"/>
+          </clipPath>
+          <clipPath id="lwingClip">
+            <polygon points="296,164 208,62 178,76 260,172"/>
+          </clipPath>
+          <clipPath id="rwingClip">
+            <polygon points="300,228 368,316 398,302 328,222"/>
+          </clipPath>
+        </defs>
+
+        <!-- ── GROUND PLANE ── -->
+        <!-- Grid lines on ground -->
+        <g opacity="0.12">
+          <line x1="-40" y1="350" x2="540" y2="350" stroke="#00c8ff" stroke-width="0.8"/>
+          <line x1="-40" y1="330" x2="540" y2="330" stroke="#00c8ff" stroke-width="0.5"/>
+          <line x1="-40" y1="370" x2="540" y2="370" stroke="#00c8ff" stroke-width="0.5"/>
+          <line x1="50" y1="290" x2="50" y2="385" stroke="#00c8ff" stroke-width="0.5"/>
+          <line x1="130" y1="290" x2="130" y2="385" stroke="#00c8ff" stroke-width="0.5"/>
+          <line x1="210" y1="280" x2="210" y2="385" stroke="#00c8ff" stroke-width="0.5"/>
+          <line x1="290" y1="278" x2="290" y2="385" stroke="#00c8ff" stroke-width="0.5"/>
+          <line x1="370" y1="280" x2="370" y2="385" stroke="#00c8ff" stroke-width="0.5"/>
+          <line x1="450" y1="290" x2="450" y2="385" stroke="#00c8ff" stroke-width="0.5"/>
+        </g>
+
+        <!-- Ground shadow ellipse -->
+        <ellipse cx="285" cy="355" rx="175" ry="26" fill="url(#gndGrad)"/>
+        <!-- Outer dashed ring -->
+        <ellipse cx="285" cy="355" rx="175" ry="26" stroke="#00c8ff" stroke-width="0.8" stroke-dasharray="8 6" opacity="0.35"/>
+        <!-- Inner ring -->
+        <ellipse cx="285" cy="355" rx="115" ry="17" stroke="#00c8ff" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.2"/>
+        <!-- Center point -->
+        <circle cx="285" cy="355" r="3" fill="#00c8ff" opacity="0.4"/>
+        <!-- Scan beam triangle from camera pod to ground -->
+        <path d="M310,255 L225,342 L355,342 Z" fill="url(#scanGrad)" opacity="0.6"/>
+        <!-- XYZ readout -->
+        <g font-family="Share Tech Mono" font-size="7.5" fill="#00c8ff" opacity="0.5">
+          <text x="308" y="350">X: +42.441</text>
+          <text x="308" y="361">Y: -18.201</text>
+          <text x="308" y="372">Z: +64.992</text>
+        </g>
+
+        <!-- ── LEFT WING (upper-left in perspective) ── -->
+        <polygon points="296,164 208,62 178,76 260,172"
+          fill="url(#wingFill)" stroke="#00c8ff" stroke-width="1.3" opacity="0.9"/>
+        <!-- Wing ribs -->
+        <g clip-path="url(#lwingClip)" stroke="#00c8ff" stroke-width="0.5" opacity="0.5">
+          <line x1="284" y1="168" x2="196" y2="66"/>
+          <line x1="270" y1="170" x2="183" y2="68"/>
+          <line x1="255" y1="172" x2="220" y2="100"/>
+          <!-- Chord lines -->
+          <line x1="208" y1="62" x2="182" y2="70"/>
+          <line x1="230" y1="90" x2="210" y2="96"/>
+          <line x1="252" y1="118" x2="236" y2="125"/>
+        </g>
+        <!-- Left winglet (vertical fin at tip) -->
+        <polygon points="208,62 200,38 186,46 178,76" fill="rgba(0,200,255,0.06)" stroke="#00c8ff" stroke-width="1.2"/>
+
+        <!-- ── RIGHT WING (lower-right in perspective, toward viewer) ── -->
+        <polygon points="300,228 368,316 398,302 328,222"
+          fill="url(#wingFill)" stroke="#00c8ff" stroke-width="1.3" opacity="0.85"/>
+        <!-- Wing ribs -->
+        <g clip-path="url(#rwingClip)" stroke="#00c8ff" stroke-width="0.5" opacity="0.45">
+          <line x1="312" y1="225" x2="380" y2="318"/>
+          <line x1="322" y1="223" x2="390" y2="310"/>
+          <!-- Chord lines -->
+          <line x1="368" y1="316" x2="398" y2="302"/>
+          <line x1="348" y1="291" x2="375" y2="279"/>
+          <line x1="328" y1="264" x2="352" y2="254"/>
+        </g>
+        <!-- Right winglet -->
+        <polygon points="368,316 376,338 390,330 398,302" fill="rgba(0,200,255,0.06)" stroke="#00c8ff" stroke-width="1.2"/>
+
+        <!-- ── FUSELAGE BODY ── -->
+        <!-- Main body fill -->
+        <path d="M490,193
+          C468,177 435,162 398,156
+          C368,151 335,149 308,150
+          C278,151 245,156 215,163
+          C185,170 158,179 138,188
+          C130,191 126,194 130,197
+          C150,206 182,217 215,224
+          C245,230 278,234 308,233
+          C335,232 368,228 398,220
+          C435,212 468,203 490,197 Z"
+          fill="url(#bodyFill)" stroke="#00c8ff" stroke-width="1.8"/>
+
+        <!-- Body wireframe ribs (clipped) -->
+        <g clip-path="url(#bodyClip)" stroke="#00c8ff" stroke-width="0.6" opacity="0.38">
+          <line x1="460" y1="140" x2="460" y2="220"/>
+          <line x1="430" y1="135" x2="430" y2="228"/>
+          <line x1="400" y1="130" x2="400" y2="234"/>
+          <line x1="370" y1="127" x2="370" y2="238"/>
+          <line x1="340" y1="125" x2="340" y2="240"/>
+          <line x1="310" y1="124" x2="310" y2="242"/>
+          <line x1="280" y1="126" x2="280" y2="241"/>
+          <line x1="250" y1="130" x2="250" y2="238"/>
+          <line x1="220" y1="136" x2="220" y2="232"/>
+          <line x1="192" y1="144" x2="192" y2="225"/>
+          <line x1="165" y1="154" x2="165" y2="216"/>
+        </g>
+        <!-- Longitudinal body lines -->
+        <g stroke="#00c8ff" stroke-width="0.5" opacity="0.28">
+          <line x1="136" y1="180" x2="490" y2="172"/>
+          <line x1="136" y1="208" x2="490" y2="214"/>
+          <!-- Centerline -->
+          <line x1="130" y1="194" x2="490" y2="194" stroke-dasharray="10 8"/>
+        </g>
+
+        <!-- Cockpit canopy -->
+        <path d="M398,158 C388,148 370,142 350,140 C330,138 314,141 308,145 C302,149 300,154 302,158 L310,158 C316,154 330,150 348,151 C366,152 384,158 394,162 Z"
+          fill="rgba(0,150,220,0.18)" stroke="#00c8ff" stroke-width="1.2"/>
+        <!-- Canopy highlight line -->
+        <line x1="340" y1="142" x2="336" y2="152" stroke="#00c8ff" stroke-width="0.7" opacity="0.6"/>
+        <line x1="358" y1="141" x2="354" y2="150" stroke="#00c8ff" stroke-width="0.7" opacity="0.6"/>
+
+        <!-- Nose tip glow -->
+        <circle cx="490" cy="194" r="4" fill="#00c8ff" opacity="0.6" filter="url(#glwStr)"/>
+        <circle cx="490" cy="194" r="2" fill="#fff" opacity="0.9"/>
+
+        <!-- ── V-TAIL ── -->
+        <!-- Upper fin -->
+        <polygon points="130,190 117,152 146,174" fill="rgba(0,200,255,0.07)" stroke="#00c8ff" stroke-width="1.2"/>
+        <!-- Rib in upper fin -->
+        <line x1="130" y1="190" x2="125" y2="164" stroke="#00c8ff" stroke-width="0.5" opacity="0.4"/>
+        <!-- Lower fin -->
+        <polygon points="130,196 117,232 146,214" fill="rgba(0,200,255,0.07)" stroke="#00c8ff" stroke-width="1.2"/>
+        <line x1="130" y1="196" x2="125" y2="220" stroke="#00c8ff" stroke-width="0.5" opacity="0.4"/>
+
+        <!-- ── CAMERA / SENSOR POD ── -->
+        <!-- Strut -->
+        <line x1="310" y1="232" x2="310" y2="252" stroke="#00c8ff" stroke-width="1.8" opacity="0.8"/>
+        <!-- Pod body -->
+        <ellipse cx="310" cy="262" rx="30" ry="14" fill="rgba(0,20,35,0.92)" stroke="#00c8ff" stroke-width="1.4"/>
+        <!-- Pod internal ring -->
+        <ellipse cx="310" cy="262" rx="20" ry="9" fill="rgba(0,80,120,0.2)" stroke="#00c8ff" stroke-width="0.7" opacity="0.7"/>
+        <!-- Three lenses (like reference) -->
+        <circle cx="295" cy="262" r="5" fill="rgba(0,200,255,0.1)" stroke="#00c8ff" stroke-width="0.9"/>
+        <circle cx="310" cy="262" r="5" fill="rgba(0,200,255,0.1)" stroke="#00c8ff" stroke-width="0.9"/>
+        <circle cx="325" cy="262" r="5" fill="rgba(0,200,255,0.1)" stroke="#00c8ff" stroke-width="0.9"/>
+        <circle cx="295" cy="262" r="2.5" fill="#00c8ff" opacity="0.6" filter="url(#glw)"/>
+        <circle cx="310" cy="262" r="2.5" fill="#00c8ff" opacity="0.5"/>
+        <circle cx="325" cy="262" r="2.5" fill="#00c8ff" opacity="0.4"/>
+
+        <!-- ── REAR PUSHER PROP ── -->
+        <!-- Nacelle -->
+        <ellipse cx="128" cy="193" rx="10" ry="6" fill="url(#nacelleFill)" stroke="#00c8ff" stroke-width="1.1"/>
+        <!-- Prop group (rear, spins around its center) -->
+        <g id="propRear" style="transform-origin:128px 193px">
+          <ellipse cx="128" cy="193" rx="28" ry="8" fill="rgba(0,200,255,0.08)"/>
+          <line x1="100" y1="193" x2="156" y2="193" stroke="rgba(0,200,255,0.65)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="128" y1="173" x2="128" y2="213" stroke="rgba(0,200,255,0.65)" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+
+        <!-- ── LEFT TILT ROTOR ─── -->
+        <!--
+          Pivot: (246, 132) — where pylon arm attaches to left wing
+          The whole group rotates around this point.
+          In hover (0°): arm goes straight UP, nacelle above.
+          Rotating to +82° (cruise): arm swings toward nose (right).
+        -->
+        <g id="tiltL">
+          <!-- Pylon arm: from pivot up to nacelle base -->
+          <rect x="242" y="107" width="8" height="25" rx="3"
+            fill="url(#nacelleFill)" stroke="#00c8ff" stroke-width="1"/>
+          <!-- Nacelle cylinder -->
+          <ellipse cx="246" cy="100" rx="12" ry="16"
+            fill="url(#nacelleFill)" stroke="#00c8ff" stroke-width="1.4"/>
+          <!-- Nacelle band -->
+          <ellipse cx="246" cy="100" rx="8" ry="10"
+            fill="rgba(0,100,160,0.15)" stroke="#00c8ff" stroke-width="0.6" opacity="0.7"/>
+          <!-- Motor top cap -->
+          <ellipse cx="246" cy="86" rx="13" ry="5"
+            fill="rgba(0,30,50,0.9)" stroke="#ffb800" stroke-width="1"/>
+          <!-- LED glow -->
+          <circle cx="246" cy="86" r="3" fill="#ffb800" opacity="0.9" filter="url(#glw)"/>
+          <!-- Prop disc (spins) -->
+          <g id="propTL" style="transform-origin:246px 86px">
+            <ellipse cx="246" cy="86" rx="26" ry="7" fill="rgba(255,184,0,0.12)"/>
+            <line x1="220" y1="86" x2="272" y2="86" stroke="rgba(255,184,0,0.8)" stroke-width="3" stroke-linecap="round"/>
+            <line x1="246" y1="63" x2="246" y2="109" stroke="rgba(255,184,0,0.8)" stroke-width="3" stroke-linecap="round"/>
+          </g>
+        </g>
+
+        <!-- ── RIGHT TILT ROTOR ── -->
+        <!--
+          Pivot: (318, 255) — where pylon arm attaches to right wing
+        -->
+        <g id="tiltR">
+          <!-- Pylon arm -->
+          <rect x="314" y="230" width="8" height="25" rx="3"
+            fill="url(#nacelleFill)" stroke="#00c8ff" stroke-width="1"/>
+          <!-- Nacelle -->
+          <ellipse cx="318" cy="223" rx="12" ry="16"
+            fill="url(#nacelleFill)" stroke="#00c8ff" stroke-width="1.4"/>
+          <ellipse cx="318" cy="223" rx="8" ry="10"
+            fill="rgba(0,100,160,0.15)" stroke="#00c8ff" stroke-width="0.6" opacity="0.7"/>
+          <!-- Motor cap -->
+          <ellipse cx="318" cy="209" rx="13" ry="5"
+            fill="rgba(0,30,50,0.9)" stroke="#ffb800" stroke-width="1"/>
+          <circle cx="318" cy="209" r="3" fill="#ffb800" opacity="0.9" filter="url(#glw)"/>
+          <!-- Prop -->
+          <g id="propTR" style="transform-origin:318px 209px">
+            <ellipse cx="318" cy="209" rx="26" ry="7" fill="rgba(255,184,0,0.12)"/>
+            <line x1="292" y1="209" x2="344" y2="209" stroke="rgba(255,184,0,0.8)" stroke-width="3" stroke-linecap="round"/>
+            <line x1="318" y1="186" x2="318" y2="232" stroke="rgba(255,184,0,0.8)" stroke-width="3" stroke-linecap="round"/>
+          </g>
+        </g>
+
+        <!-- ── HUD ANNOTATIONS ── -->
+        <g font-family="Share Tech Mono" font-size="8.5">
+          <!-- Left panel (green) -->
+          <text x="30" y="172" fill="#00ff88" opacity="0.9">SYS.OP.NOMINAL</text>
+          <text x="30" y="185" fill="#00ff88" opacity="0.9">LINK: SECURE</text>
+          <text x="30" y="198" fill="#ffb800" opacity="0.85">PWR: 86% / 64.2V</text>
+          <!-- Right panel (cyan) -->
+          <text x="368" y="148" fill="#00c8ff" opacity="0.85">AERO-TRACK v2.4</text>
+          <text x="368" y="161" fill="#00c8ff" opacity="0.85">ALT: 1,402 ASL</text>
+          <text x="368" y="174" fill="#ff3a3a" opacity="0.9">TARGET LOCKED</text>
+          <!-- Dynamic tilt readout -->
+          <text id="tiltHudAngle" x="368" y="190" fill="#ffb800" opacity="0.8">TILT: 0°</text>
+          <text id="tiltHudMode"  x="368" y="203" fill="#00ff88" opacity="0.8">MODE: HOVER</text>
+        </g>
+
+        <!-- Bracket lines -->
+        <line x1="28" y1="178" x2="125" y2="186" stroke="#00ff88" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.5"/>
+        <line x1="366" y1="158" x2="344" y2="162" stroke="#00c8ff" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.5"/>
+        <!-- Tilt rotor annotation lines -->
+        <line x1="246" y1="82" x2="220" y2="60" stroke="#ffb800" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.4" id="leftTiltLine"/>
+        <line x1="318" y1="205" x2="350" y2="188" stroke="#ffb800" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.4"/>
+        <text id="leftTiltLabel" x="182" y="58" font-family="Share Tech Mono" font-size="7" fill="#ffb800" opacity="0.55">TILT ROTOR</text>
+
+        <!-- Star glyph (bottom-right, like reference) -->
+        <path d="M510,358 L512,351 L514,358 L521,360 L514,362 L512,369 L510,362 L503,360 Z" fill="#fff" opacity="0.35"/>
+        <!-- Floating dot (like reference) -->
+        <circle cx="228" cy="88" r="3.5" fill="#00c8ff" filter="url(#glwStr)" opacity="0.7"/>
+      </svg>
+    </div>
+
+    <!-- RADAR -->
+    <div class="radar-interactive-wrap">
+      <canvas id="radarCanvas" width="220" height="220"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div style="position:relative;z-index:10;padding:0 3rem;">
+  <div class="stats-row">
+    <div class="stat"><span class="stat-num" data-target="12">0</span><span class="stat-label">UAV Platforms Built</span></div>
+    <div class="stat"><span class="stat-num" data-target="200" data-suffix="h">0</span><span class="stat-label">Flight Hours Logged</span></div>
+    <div class="stat"><span class="stat-num" data-target="8">0</span><span class="stat-label">Publications</span></div>
+    <div class="stat"><span class="stat-num" data-target="3">0</span><span class="stat-label">Patents Filed</span></div>
+  </div>
+</div>
+<div class="divider" style="margin-top:0"></div>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-label">// 001 — PROJECTS</div>
+  <h2 class="section-title">Active Missions</h2>
+  <div class="projects-grid">
+    <div class="project-card featured" id="prj-1">
+      <div class="card-visual">
+        <div class="hud-corner tl"></div><div class="hud-corner tr"></div><div class="hud-corner bl"></div><div class="hud-corner br"></div>
+        <svg viewBox="0 0 300 180" width="300" fill="none">
+          <polyline points="0,140 30,120 60,130 90,80 120,90 150,60 180,70 210,40 240,55 270,30 300,45" stroke="#00c8ff" stroke-width="1.5" opacity="0.5"/>
+          <polygon points="0,140 30,120 60,130 90,80 120,90 150,60 180,70 210,40 240,55 270,30 300,45 300,180 0,180" fill="rgba(0,200,255,0.04)"/>
+          <polyline points="50,80 130,50 220,35 270,28" stroke="#ffb800" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.7"/>
+          <circle cx="270" cy="28" r="5" fill="#ffb800" opacity="0.9"><animate attributeName="r" values="5;9;5" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.5s" repeatCount="indefinite"/></circle>
+          <line x1="100" y1="0" x2="100" y2="180" stroke="#00c8ff" stroke-width="0.3" opacity="0.2"/>
+          <line x1="200" y1="0" x2="200" y2="180" stroke="#00c8ff" stroke-width="0.3" opacity="0.2"/>
+          <line x1="0" y1="60" x2="300" y2="60" stroke="#00c8ff" stroke-width="0.3" opacity="0.2"/>
+          <line x1="0" y1="120" x2="300" y2="120" stroke="#00c8ff" stroke-width="0.3" opacity="0.2"/>
+          <text x="10" y="20" font-family="Share Tech Mono" font-size="8" fill="#00c8ff" opacity="0.5">MISSION AREA: 4.2km²</text>
+          <text x="10" y="33" font-family="Share Tech Mono" font-size="8" fill="#ffb800" opacity="0.6">COVERAGE: 94%</text>
+        </svg>
+        <div class="card-tag">FEATURED</div>
+      </div>
+      <div class="card-body">
+        <div class="card-id">PRJ-001 · AUTONOMOUS MAPPING</div>
+        <div class="card-title">Long-Range Terrain Mapping & 3D Reconstruction System</div>
+        <div class="card-desc">Fixed-wing UAV platform with onboard photogrammetry pipeline. Generates dense point clouds and orthomosaics from multi-spectral imagery in real-time, covering up to 50km² per mission.</div>
+      </div>
+      <div class="card-footer"><span class="tag">ROS2</span><span class="tag">OpenCV</span><span class="tag">COLMAP</span><span class="tag">PX4</span><span class="tag">CUDA</span></div>
+    </div>
+    <div class="project-card" id="prj-2">
+      <div class="card-visual" style="background:radial-gradient(ellipse at center,rgba(255,184,0,0.08) 0%,transparent 70%)">
+        <div class="hud-corner tl"></div><div class="hud-corner tr"></div>
+        <svg viewBox="0 0 200 140" width="200" fill="none">
+          <circle cx="100" cy="70" r="50" stroke="#ffb800" stroke-width="1" stroke-dasharray="3 3" opacity="0.4"/>
+          <circle cx="100" cy="70" r="30" stroke="#ffb800" stroke-width="0.5" opacity="0.25"/>
+          <circle cx="100" cy="70" r="10" fill="rgba(255,184,0,0.15)" stroke="#ffb800" stroke-width="1"/>
+          <line x1="60" y1="35" x2="95" y2="68" stroke="#ff3a3a" stroke-width="1.5" opacity="0.8"/>
+          <circle cx="60" cy="35" r="4" fill="#ff3a3a" opacity="0.9"><animate attributeName="opacity" values="0.9;0.2;0.9" dur="1s" repeatCount="indefinite"/></circle>
+          <text x="12" y="125" font-family="Share Tech Mono" font-size="7" fill="#ffb800" opacity="0.6">TRACK CONF: 97.3%</text>
+        </svg>
+        <div class="card-tag">VISION AI</div>
+      </div>
+      <div class="card-body">
+        <div class="card-id">PRJ-002 · TARGET TRACKING</div>
+        <div class="card-title">Multi-Object Visual Tracking with Onboard Inference</div>
+        <div class="card-desc">Edge-deployed YOLOv8 + DeepSORT at 30fps on Jetson Orin.</div>
+      </div>
+      <div class="card-footer"><span class="tag">YOLOv8</span><span class="tag">DeepSORT</span><span class="tag">TensorRT</span></div>
+    </div>
+    <div class="project-card" id="prj-3">
+      <div class="card-visual">
+        <div class="hud-corner tl"></div><div class="hud-corner tr"></div>
+        <svg viewBox="0 0 200 140" width="200" fill="none">
+          <polyline points="20,90 50,85 80,60 100,70 120,40 145,55 180,30" stroke="#00c8ff" stroke-width="1.5"/>
+          <polyline points="20,110 50,105 80,90 100,95 120,80 145,88 180,70" stroke="#ffb800" stroke-width="1" stroke-dasharray="3 2" opacity="0.6"/>
+          <circle cx="180" cy="30" r="3" fill="#00c8ff"/>
+          <text x="22" y="135" font-family="Share Tech Mono" font-size="7" fill="#00c8ff" opacity="0.6">TELEMETRY FEED LIVE</text>
+        </svg>
+        <div class="card-tag">SWARM</div>
+      </div>
+      <div class="card-body">
+        <div class="card-id">PRJ-003 · SWARM FORMATION</div>
+        <div class="card-title">Decentralized Swarm Flight Controller</div>
+        <div class="card-desc">Consensus-based formation control for 8-drone swarms using local mesh communication only.</div>
+      </div>
+      <div class="card-footer"><span class="tag">C++</span><span class="tag">MAVSDK</span><span class="tag">Mesh WiFi</span></div>
+    </div>
+    <div class="project-card" id="prj-4">
+      <div class="card-visual" style="background:radial-gradient(ellipse at center,rgba(255,58,58,0.06) 0%,transparent 70%)">
+        <div class="hud-corner tl"></div><div class="hud-corner tr"></div>
+        <svg viewBox="0 0 200 140" width="200" fill="none">
+          <rect x="50" y="30" width="100" height="80" rx="4" stroke="#00c8ff" stroke-width="1" fill="rgba(0,200,255,0.04)"/>
+          <polygon points="100,55 113,77 87,77" fill="none" stroke="#ffb800" stroke-width="1.5"/>
+          <circle cx="100" cy="70" r="22" stroke="#ff3a3a" stroke-width="1" stroke-dasharray="2 2" opacity="0.5"><animate attributeName="r" values="22;26;22" dur="2s" repeatCount="indefinite"/></circle>
+          <text x="20" y="128" font-family="Share Tech Mono" font-size="7" fill="#ff3a3a" opacity="0.7">OBSTACLE DETECTED</text>
+        </svg>
+        <div class="card-tag">NAVIGATION</div>
+      </div>
+      <div class="card-body">
+        <div class="card-id">PRJ-004 · COLLISION AVOIDANCE</div>
+        <div class="card-title">Reactive 3D Obstacle Avoidance in GPS-Denied Environments</div>
+        <div class="card-desc">Depth-camera + LiDAR fusion with EGO-planner trajectory replanning.</div>
+      </div>
+      <div class="card-footer"><span class="tag">EGO-Planner</span><span class="tag">ROS2</span><span class="tag">RealSense</span></div>
+    </div>
+    <div class="project-card" id="prj-5">
+      <div class="card-visual">
+        <div class="hud-corner tl"></div><div class="hud-corner tr"></div>
+        <svg viewBox="0 0 200 140" width="200" fill="none">
+          <path d="M40 70 Q70 30 100 70 Q130 110 160 70" stroke="#00c8ff" stroke-width="1.5"/>
+          <circle cx="100" cy="70" r="6" fill="#00c8ff" opacity="0.8"><animateMotion dur="3s" repeatCount="indefinite" path="M-60,0 Q-30,-40 0,0 Q30,40 60,0"/></circle>
+          <text x="30" y="128" font-family="Share Tech Mono" font-size="7" fill="#00c8ff" opacity="0.6">PATH REPLANNING ACTIVE</text>
+        </svg>
+        <div class="card-tag">AUTONOMY</div>
+      </div>
+      <div class="card-body">
+        <div class="card-id">PRJ-005 · AUTONOMOUS DELIVERY</div>
+        <div class="card-title">Last-Mile UAV Delivery with Precision Landing</div>
+        <div class="card-desc">ArUco marker-based centimeter-precision landing on moving targets with wind compensation.</div>
+      </div>
+      <div class="card-footer"><span class="tag">ArUco</span><span class="tag">ArduPilot</span><span class="tag">Python</span></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- SKILLS NODE GRAPH -->
+<section id="skills">
+  <div class="section-label">// 002 — SYSTEMS</div>
+  <h2 class="section-title">Technical Stack</h2>
+  <div class="tech-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#00c8ff"></div>Flight & Autonomy</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff3a3a"></div>Perception & AI</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffb800"></div>Hardware & Embedded</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00ff88"></div>Simulation & Tools</div>
+  </div>
+  <canvas id="techCanvas"></canvas>
+  <p style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;margin-top:1rem;text-align:center;">HOVER NODES TO INSPECT · CONNECTIONS SHOW DEPENDENCIES</p>
+</section>
+<div class="divider"></div>
+
+<!-- PUBLICATIONS -->
+<section id="pubs">
+  <div class="section-label">// 003 — RESEARCH</div>
+  <h2 class="section-title">Publications</h2>
+  <div class="pub-grid">
+    <div class="pub-card"><div class="pub-year">2024 · IEEE ICRA</div><div class="pub-title">EgoSwarm: Decentralized Ego-Planner for Multi-UAV Formation in Unknown Environments</div><div class="pub-venue">International Conference on Robotics and Automation · 2024</div><div class="pub-tags"><span class="pub-tag">Swarm</span><span class="pub-tag">Path Planning</span><span class="pub-tag">ROS2</span></div></div>
+    <div class="pub-card"><div class="pub-year">2024 · RA-L</div><div class="pub-title">Real-Time 3D Occupancy Mapping with Multi-Modal Sensor Fusion on Edge Devices</div><div class="pub-venue">IEEE Robotics and Automation Letters · Vol. 9, 2024</div><div class="pub-tags"><span class="pub-tag">LiDAR</span><span class="pub-tag">Sensor Fusion</span><span class="pub-tag">Edge AI</span></div></div>
+    <div class="pub-card"><div class="pub-year">2023 · IROS</div><div class="pub-title">Adaptive Gimbal Control for Centimeter-Precision Target Tracking Under Wind Disturbance</div><div class="pub-venue">IEEE/RSJ International Conference on Intelligent Robots · 2023</div><div class="pub-tags"><span class="pub-tag">Control</span><span class="pub-tag">Computer Vision</span><span class="pub-tag">PX4</span></div></div>
+    <div class="pub-card"><div class="pub-year">2023 · JFR</div><div class="pub-title">Photogrammetric Pipeline for Fixed-Wing UAV Orthomosaic Generation at Scale</div><div class="pub-venue">Journal of Field Robotics · Vol. 40, Issue 6, 2023</div><div class="pub-tags"><span class="pub-tag">Mapping</span><span class="pub-tag">COLMAP</span><span class="pub-tag">Photogrammetry</span></div></div>
+    <div class="pub-card"><div class="pub-year">2022 · ICRA</div><div class="pub-title">GPS-Denied Navigation via Visual-Inertial Odometry on Resource-Constrained UAVs</div><div class="pub-venue">International Conference on Robotics and Automation · 2022</div><div class="pub-tags"><span class="pub-tag">VIO</span><span class="pub-tag">SLAM</span><span class="pub-tag">Embedded</span></div></div>
+    <div class="pub-card"><div class="pub-year">2021 · IROS</div><div class="pub-title">Onboard Neural Architecture Search for Efficient UAV Object Detection</div><div class="pub-venue">IEEE/RSJ Intelligent Robots and Systems · 2021</div><div class="pub-tags"><span class="pub-tag">NAS</span><span class="pub-tag">TensorRT</span><span class="pub-tag">Jetson</span></div></div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-label">// 004 — FLIGHT LOG</div>
+  <h2 class="section-title">Experience</h2>
+  <div class="timeline">
+    <div class="timeline-item"><div class="timeline-date">2023 — PRESENT</div><div class="timeline-role">Senior Robotics Engineer</div><div class="timeline-org">AeroCo Systems · San Francisco, CA</div></div>
+    <div class="timeline-item"><div class="timeline-date">2021 — 2023</div><div class="timeline-role">UAV Software Engineer</div><div class="timeline-org">SkySight Robotics · Austin, TX</div></div>
+    <div class="timeline-item"><div class="timeline-date">2019 — 2021</div><div class="timeline-role">Research Associate — Autonomous Systems Lab</div><div class="timeline-org">MIT CSAIL · Cambridge, MA</div></div>
+    <div class="timeline-item"><div class="timeline-date">2015 — 2019</div><div class="timeline-role">B.S. Aerospace Engineering</div><div class="timeline-org">Georgia Institute of Technology</div></div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- CONTACT (with resume download strip) -->
+<section id="contact">
+  <div class="section-label">// 005 — CONTACT</div>
+  <h2 class="section-title">Establish Link</h2>
+  <div class="contact-panel">
+    <div>
+      <p style="font-size:0.98rem;line-height:1.85;color:var(--muted);margin-bottom:2rem;">Open to collaboration, research partnerships, and consulting on aerial robotics systems. Let's build something that flies.</p>
+      <a href="mailto:you@example.com" class="contact-link"><div class="link-icon">✉</div>you@example.com</a>
+      <a href="https://github.com/yourhandle" class="contact-link"><div class="link-icon">⌥</div>github.com/yourhandle</a>
+      <a href="https://linkedin.com/in/yourprofile" class="contact-link"><div class="link-icon">▣</div>linkedin.com/in/yourprofile</a>
+      <a href="https://scholar.google.com" class="contact-link"><div class="link-icon">◈</div>Google Scholar Profile</a>
+      <!-- Resume download strip -->
+      <div class="dl-strip">
+        <a href="your-resume.pdf" download>⬇ Download CV (PDF)</a>
+        <a href="your-resume.pdf" target="_blank" class="ghost">⊞ View in Browser</a>
+        <a href="https://linkedin.com/in/yourprofile" target="_blank" class="ghost">▣ LinkedIn</a>
+      </div>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);letter-spacing:0.12em;margin-top:0.75rem;">
+        // Docusaurus: place PDF in /static/resume.pdf · link as href="/resume.pdf"
+      </p>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;">
+      <canvas id="radarContact" width="280" height="280" style="opacity:0.85"></canvas>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.2em;">LINK ESTABLISHED</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span style="color:var(--cyan)">YOUR NAME</span> &nbsp;·&nbsp; AERIAL ROBOTICS ENGINEER &nbsp;·&nbsp;
+  BUILT WITH DOCUSAURUS + GITHUB PAGES &nbsp;·&nbsp; <span id="yr"></span>
+</footer>
+
+<script>
+/* ═══ BOOT ═══ */
+const bootMsgs=[
+  {t:'VTOL PORTFOLIO v4.0 — INITIATING',c:''},
+  {t:'[<span class="ok">OK</span>] Tiltrotor subsystem.............. ARMED',c:''},
+  {t:'[<span class="ok">OK</span>] Sensor fusion pipeline........... ONLINE',c:''},
+  {t:'[<span class="ok">OK</span>] Neural inference engine.......... LOADED',c:''},
+  {t:'[<span class="warn">··</span>] GPS signal........................ ACQUIRING',c:''},
+  {t:'[<span class="ok">OK</span>] Radar scanner.................... ACTIVE',c:''},
+  {t:'[<span class="ok">OK</span>] Portfolio systems................ READY',c:''},
+];
+const bootLabels=['BOOT','HARDWARE','SENSORS','AI CORE','GPS','RADAR','LAUNCH'];
+let bi=0,pct=0;
+const bFill=document.getElementById('bootFill'),bPct=document.getElementById('bootPct'),bLbl=document.getElementById('bootBarLabel'),bLines=document.getElementById('bootLines');
+function bootStep(){
+  if(bi>=bootMsgs.length){
+    const fin=setInterval(()=>{pct=Math.min(100,pct+3);bFill.style.width=pct+'%';bPct.textContent=pct+'%';if(pct>=100){clearInterval(fin);setTimeout(()=>document.getElementById('boot').classList.add('done'),400);}},18);
+    return;
+  }
+  const d=document.createElement('div');d.className='boot-line';d.innerHTML=bootMsgs[bi].t;bLines.appendChild(d);
+  requestAnimationFrame(()=>d.classList.add('show'));
+  bLbl.textContent=bootLabels[bi]||'LOADING';
+  const tgt=Math.round(((bi+1)/bootMsgs.length)*90);
+  const fi=setInterval(()=>{pct=Math.min(tgt,pct+2);bFill.style.width=pct+'%';bPct.textContent=pct+'%';if(pct>=tgt)clearInterval(fi);},18);
+  bi++;setTimeout(bootStep,260);
+}
+setTimeout(bootStep,200);
+
+/* ═══ CURSOR + YEAR ═══ */
+const curDot=document.getElementById('cursorDot');
+document.addEventListener('mousemove',e=>{curDot.style.left=e.clientX+'px';curDot.style.top=e.clientY+'px';});
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* ═══ SCROLL BAR + NAV ACTIVE ═══ */
+window.addEventListener('scroll',()=>{
+  document.getElementById('scrollBar').style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  let cur='';
+  document.querySelectorAll('section[id]').forEach(s=>{if(window.scrollY>=s.offsetTop-200)cur=s.id;});
+  document.querySelectorAll('.nav-links a').forEach(a=>{a.style.color=a.getAttribute('href')==='#'+cur?'var(--cyan)':'';});
+});
+
+/* ═══ HAMBURGER ═══ */
+const ham=document.getElementById('hamburger'),mob=document.getElementById('mobileMenu');
+ham.addEventListener('click',()=>{ham.classList.toggle('open');mob.classList.toggle('open');});
+function closeMobile(){ham.classList.remove('open');mob.classList.remove('open');}
+
+/* ═══ TYPEWRITER ═══ */
+const roles=['UAV Systems Engineer','VTOL Designer','Autonomous Flight Expert','Embedded AI Developer','Swarm Architect'];
+let ri=0,ci=0,del=false;
+const twEl=document.getElementById('typewriterRole');
+function tw(){
+  const r=roles[ri];
+  if(!del){twEl.textContent=r.slice(0,++ci);if(ci===r.length){del=true;setTimeout(tw,2200);return;}setTimeout(tw,65);}
+  else{twEl.textContent=r.slice(0,--ci);if(ci===0){del=false;ri=(ri+1)%roles.length;setTimeout(tw,400);return;}setTimeout(tw,35);}
+}
+setTimeout(tw,2000);
+
+/* ═══ COUNT-UP STATS ═══ */
+const statEls=document.querySelectorAll('.stat-num[data-target]');
+new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting)return;
+    const el=e.target,t=parseInt(el.dataset.target),suf=el.dataset.suffix||(t>=10?'+':'');
+    let c=0;const st=Math.max(1,Math.ceil(t/60));
+    const ti=setInterval(()=>{c=Math.min(t,c+st);el.textContent=c+(c>=t?suf:'');if(c>=t)clearInterval(ti);},24);
+    statEls.forEach(x=>x===el&&new IntersectionObserver(()=>{}).disconnect());
+  });
+},{threshold:0.5}).observe(statEls[0]);
+statEls.forEach(el=>{
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(!e.isIntersecting)return;
+      const t=parseInt(el.dataset.target),suf=el.dataset.suffix||(t>=10?'+':'');
+      let c=0;const st=Math.max(1,Math.ceil(t/60));
+      const ti=setInterval(()=>{c=Math.min(t,c+st);el.textContent=c+(c>=t?suf:'');if(c>=t)clearInterval(ti);},24);
+      obs.disconnect();
+    });
+  },{threshold:0.5});
+  obs.observe(el);
+});
+
+/* ═══ PARTICLES ═══ */
+const pc=document.getElementById('particleCanvas');const pCtx=pc.getContext('2d');
+function rPC(){pc.width=window.innerWidth;pc.height=window.innerHeight;}rPC();window.addEventListener('resize',rPC);
+const parts=Array.from({length:55},()=>({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.5+.5,a:Math.random()*.35+.08,t:Math.random()>.7?'cross':'dot'}));
+(function drawP(){pCtx.clearRect(0,0,pc.width,pc.height);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=pc.width;if(p.x>pc.width)p.x=0;if(p.y<0)p.y=pc.height;if(p.y>pc.height)p.y=0;pCtx.globalAlpha=p.a;pCtx.strokeStyle='#00c8ff';pCtx.lineWidth=0.5;if(p.t==='cross'){const s=p.r*2.5;pCtx.beginPath();pCtx.moveTo(p.x-s,p.y);pCtx.lineTo(p.x+s,p.y);pCtx.stroke();pCtx.beginPath();pCtx.moveTo(p.x,p.y-s);pCtx.lineTo(p.x,p.y+s);pCtx.stroke();}else{pCtx.fillStyle='#00c8ff';pCtx.beginPath();pCtx.arc(p.x,p.y,p.r,0,Math.PI*2);pCtx.fill();}});pCtx.globalAlpha=1;requestAnimationFrame(drawP);})();
+
+/* ═══════════════════════════════════════
+   VTOL TILT ROTOR ANIMATION
+   State machine: hover ↔ transition ↔ cruise
+═══════════════════════════════════════ */
+const TILT_MAX = 82;   // degrees — cruise position (arm forward)
+const TILT_MIN = 0;    // degrees — hover position (arm up)
+const LERP_SPEED = 0.018;    // smoothing speed
+const HOLD_HOVER_MS  = 2800; // ms to hold hover
+const HOLD_CRUISE_MS = 3200; // ms to hold cruise
+
+let tiltAngle = 0;
+let tiltTarget = 0;
+let tiltPhase = 'hover'; // hover | to_cruise | cruise | to_hover
+let tiltPhaseStart = performance.now();
+let lastTiltTs = performance.now();
+
+// Prop spin angles
+const propAngles = { rear:0, tl:0, tr:0 };
+const propSpeeds = { rear:4.5, tl:6.2, tr:-6.0 };
+
+function tiltLoop(ts) {
+  const dt = ts - lastTiltTs;
+  lastTiltTs = ts;
+
+  // Phase state machine
+  const elapsed = ts - tiltPhaseStart;
+  if (tiltPhase === 'hover' && elapsed > HOLD_HOVER_MS) {
+    tiltPhase = 'to_cruise'; tiltTarget = TILT_MAX; tiltPhaseStart = ts;
+  } else if (tiltPhase === 'to_cruise' && Math.abs(tiltAngle - TILT_MAX) < 0.8) {
+    tiltAngle = TILT_MAX; tiltPhase = 'cruise'; tiltPhaseStart = ts;
+  } else if (tiltPhase === 'cruise' && elapsed > HOLD_CRUISE_MS) {
+    tiltPhase = 'to_hover'; tiltTarget = TILT_MIN; tiltPhaseStart = ts;
+  } else if (tiltPhase === 'to_hover' && Math.abs(tiltAngle - TILT_MIN) < 0.8) {
+    tiltAngle = TILT_MIN; tiltPhase = 'hover'; tiltPhaseStart = ts;
+  }
+
+  // Smooth lerp toward target
+  tiltAngle += (tiltTarget - tiltAngle) * LERP_SPEED * (dt / 16.67);
+  tiltAngle = Math.max(TILT_MIN, Math.min(TILT_MAX, tiltAngle));
+
+  // Apply tilt transform — SVG rotate(angle, cx, cy)
+  const tl = document.getElementById('tiltL');
+  const tr = document.getElementById('tiltR');
+  if (tl) tl.setAttribute('transform', `rotate(${tiltAngle.toFixed(2)}, 246, 132)`);
+  if (tr) tr.setAttribute('transform', `rotate(${tiltAngle.toFixed(2)}, 318, 255)`);
+
+  // Update HUD text
+  const deg = Math.round(tiltAngle);
+  const modeMap = { hover:'HOVER', to_cruise:'TRANSITION', cruise:'CRUISE', to_hover:'TRANSITION' };
+  const modeCol = { hover:'#00ff88', to_cruise:'#ffb800', cruise:'#00c8ff', to_hover:'#ffb800' };
+  const angleEl = document.getElementById('tiltHudAngle');
+  const modeEl  = document.getElementById('tiltHudMode');
+  const badgeEl = document.getElementById('modeBadge');
+  if (angleEl) angleEl.textContent = `TILT: ${deg}°`;
+  if (modeEl)  { modeEl.textContent = `MODE: ${modeMap[tiltPhase]}`; modeEl.setAttribute('fill', modeCol[tiltPhase]); }
+  if (badgeEl) badgeEl.textContent = `MODE: ${modeMap[tiltPhase]} · TILT: ${deg}°`;
+
+  // Spin props
+  const speed = tiltPhase === 'cruise' ? 1.4 : (tiltPhase === 'hover' ? 1.0 : 1.2);
+  propAngles.rear = (propAngles.rear + propSpeeds.rear * speed) % 360;
+  propAngles.tl   = (propAngles.tl   + propSpeeds.tl   * speed) % 360;
+  propAngles.tr   = (propAngles.tr   + propSpeeds.tr   * speed) % 360;
+
+  const pRear = document.getElementById('propRear');
+  const pTL   = document.getElementById('propTL');
+  const pTR   = document.getElementById('propTR');
+  if (pRear) pRear.style.transform = `rotate(${propAngles.rear}deg)`;
+  if (pTL)   pTL.style.transform   = `rotate(${propAngles.tl}deg)`;
+  if (pTR)   pTR.style.transform   = `rotate(${propAngles.tr}deg)`;
+
+  requestAnimationFrame(tiltLoop);
+}
+requestAnimationFrame(tiltLoop);
+
+/* ═══ INTERACTIVE RADAR ═══ */
+const radarProjects=[
+  {name:'Terrain Mapping',    type:'Mapping & 3D Recon', label:'PRJ-01',angle:-60, dist:0.55,rgb:'0,200,255', target:'prj-1'},
+  {name:'Visual Tracking',    type:'Vision AI',          label:'PRJ-02',angle:25,  dist:0.72,rgb:'255,184,0', target:'prj-2'},
+  {name:'Swarm Formation',    type:'Swarm Control',      label:'PRJ-03',angle:130, dist:0.45,rgb:'0,255,136', target:'prj-3'},
+  {name:'Obstacle Avoidance', type:'Navigation',         label:'PRJ-04',angle:-150,dist:0.65,rgb:'255,58,58', target:'prj-4'},
+  {name:'Delivery System',    type:'Autonomy',           label:'PRJ-05',angle:200, dist:0.35,rgb:'180,100,255',target:'prj-5'},
+];
+function makeRadar(cid,size,projs){
+  const cv=document.getElementById(cid);if(!cv)return;
+  cv.width=size;cv.height=size;
+  const ctx=cv.getContext('2d'),cx=size/2,cy=size/2,R=size/2-6,tt=document.getElementById('radarTooltip');
+  const blips=projs.map(p=>{const a=(p.angle*Math.PI)/180,r=p.dist*R;return{...p,x:cx+r*Math.cos(a),y:cy+r*Math.sin(a),glow:0};});
+  let hov=null,sw=0;
+  cv.addEventListener('mousemove',e=>{const rc=cv.getBoundingClientRect(),mx=(e.clientX-rc.left)*(size/rc.width),my=(e.clientY-rc.top)*(size/rc.height);hov=null;blips.forEach(b=>{if(Math.hypot(mx-b.x,my-b.y)<14)hov=b;});if(hov){cv.style.cursor='pointer';tt.style.display='block';tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-10)+'px';document.getElementById('ttName').textContent=hov.name;document.getElementById('ttType').textContent=hov.type+' — click to view';}else{cv.style.cursor='crosshair';tt.style.display='none';}});
+  cv.addEventListener('mouseleave',()=>{tt.style.display='none';hov=null;});
+  cv.addEventListener('click',()=>{if(hov?.target)document.getElementById(hov.target)?.scrollIntoView({behavior:'smooth',block:'center'});});
+  function draw(){
+    ctx.clearRect(0,0,size,size);
+    ctx.fillStyle='rgba(3,10,15,0.6)';ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();
+    [0.85,0.65,0.43,0.22].forEach(f=>{ctx.beginPath();ctx.arc(cx,cy,R*f,0,Math.PI*2);ctx.strokeStyle='rgba(0,200,255,0.12)';ctx.lineWidth=1;ctx.stroke();});
+    ctx.strokeStyle='rgba(0,200,255,0.07)';ctx.lineWidth=0.5;
+    [[6,cy,size-6,cy],[cx,6,cx,size-6]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();});
+    const sr=sw*Math.PI/180;
+    for(let i=0;i<60;i++){const a=sr-(i*Math.PI/180);ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R-4,a-Math.PI/180,a+Math.PI/180);ctx.closePath();ctx.fillStyle=`rgba(0,200,255,${(60-i)/60*0.35})`;ctx.fill();}
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+(R-4)*Math.cos(sr),cy+(R-4)*Math.sin(sr));ctx.strokeStyle='rgba(0,200,255,0.85)';ctx.lineWidth=1.5;ctx.stroke();
+    blips.forEach(b=>{
+      const bA=(Math.atan2(b.y-cy,b.x-cx)*180/Math.PI+360)%360;
+      if((sw-bA+360)%360<3)b.glow=1.0;
+      if(b.glow>0)b.glow=Math.max(0,b.glow-0.008);
+      const isH=hov===b,r=isH?7:4+b.glow*3;
+      if(b.glow>0.1||isH){const gr=ctx.createRadialGradient(b.x,b.y,r,b.x,b.y,r+10+b.glow*10);gr.addColorStop(0,`rgba(${b.rgb},${b.glow*0.5+(isH?0.3:0)})`);gr.addColorStop(1,`rgba(${b.rgb},0)`);ctx.beginPath();ctx.arc(b.x,b.y,r+10+b.glow*10,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();}
+      ctx.beginPath();ctx.arc(b.x,b.y,r,0,Math.PI*2);ctx.fillStyle=`rgba(${b.rgb},${0.5+b.glow*0.5})`;ctx.fill();
+      if(b.glow>0.3||isH){ctx.fillStyle=`rgba(${b.rgb},${Math.min(1,b.glow+(isH?0.9:0))})`;ctx.font=`${size<200?6:7}px 'Share Tech Mono',monospace`;ctx.textAlign='left';ctx.fillText(b.label,b.x+r+4,b.y+3);}
+    });
+    ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fillStyle='#ffb800';ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle='rgba(0,200,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();
+    sw=(sw+0.8)%360;requestAnimationFrame(draw);
+  }
+  draw();
+}
+makeRadar('radarCanvas',220,radarProjects);
+makeRadar('radarContact',280,radarProjects);
+
+/* ═══ TECH NODE GRAPH ═══ */
+const tCv=document.getElementById('techCanvas');const tCtx=tCv.getContext('2d');const ttEl=document.getElementById('techTooltip');
+function rTech(){tCv.width=tCv.parentElement.clientWidth;tCv.height=540;layoutNodes();}
+const cats={flight:{color:'#00c8ff',label:'Flight & Autonomy'},ai:{color:'#ff3a3a',label:'Perception & AI'},hardware:{color:'#ffb800',label:'Hardware & Embedded'},tools:{color:'#00ff88',label:'Simulation & Tools'}};
+const nodes=[
+  {id:'ros2',label:'ROS2',cat:'flight',level:95,anchor:[0.18,0.28]},{id:'px4',label:'PX4',cat:'flight',level:90,anchor:[0.10,0.50]},
+  {id:'ardupilot',label:'ArduPilot',cat:'flight',level:85,anchor:[0.18,0.70]},{id:'mavsdk',label:'MAVSDK',cat:'flight',level:88,anchor:[0.30,0.58]},
+  {id:'planner',label:'Path Planning',cat:'flight',level:82,anchor:[0.30,0.38]},{id:'opencv',label:'OpenCV',cat:'ai',level:92,anchor:[0.50,0.20]},
+  {id:'pytorch',label:'PyTorch',cat:'ai',level:80,anchor:[0.62,0.32]},{id:'yolo',label:'YOLOv8',cat:'ai',level:85,anchor:[0.72,0.20]},
+  {id:'trt',label:'TensorRT',cat:'ai',level:78,anchor:[0.80,0.38]},{id:'fusion',label:'Sensor Fusion',cat:'ai',level:82,anchor:[0.58,0.50]},
+  {id:'colmap',label:'COLMAP',cat:'ai',level:75,anchor:[0.70,0.55]},{id:'cpp',label:'C++',cat:'hardware',level:88,anchor:[0.18,0.88]},
+  {id:'python',label:'Python',cat:'hardware',level:95,anchor:[0.35,0.88]},{id:'jetson',label:'Jetson/CUDA',cat:'hardware',level:78,anchor:[0.50,0.80]},
+  {id:'kicad',label:'KiCAD(PCB)',cat:'hardware',level:70,anchor:[0.30,0.78]},{id:'gazebo',label:'Gazebo',cat:'tools',level:86,anchor:[0.75,0.75]},
+  {id:'git',label:'Git/CI-CD',cat:'tools',level:90,anchor:[0.88,0.60]},{id:'sitl',label:'SITL/HITL',cat:'tools',level:84,anchor:[0.88,0.80]},
+];
+const edges=[['ros2','px4'],['ros2','mavsdk'],['ros2','planner'],['ros2','opencv'],['ros2','fusion'],['px4','mavsdk'],['ardupilot','mavsdk'],['px4','cpp'],['ardupilot','cpp'],['opencv','fusion'],['pytorch','yolo'],['yolo','trt'],['trt','jetson'],['fusion','jetson'],['colmap','opencv'],['colmap','python'],['cpp','kicad'],['python','ros2'],['python','pytorch'],['python','mavsdk'],['gazebo','sitl'],['sitl','px4'],['sitl','ardupilot'],['git','ros2'],['jetson','gazebo'],['planner','fusion']];
+let pos=[],hovN=null,tFr=0;
+function layoutNodes(){const W=tCv.width,H=tCv.height;pos=nodes.map(n=>({...n,x:n.anchor[0]*W,y:n.anchor[1]*H,r:6+n.level*.08,pulse:Math.random()*Math.PI*2}));}
+rTech();window.addEventListener('resize',rTech);
+function drawTech(){
+  const W=tCv.width,H=tCv.height;tCtx.clearRect(0,0,W,H);tFr++;
+  tCtx.strokeStyle='rgba(0,200,255,0.025)';tCtx.lineWidth=1;
+  for(let x=0;x<W;x+=60){tCtx.beginPath();tCtx.moveTo(x,0);tCtx.lineTo(x,H);tCtx.stroke();}
+  for(let y=0;y<H;y+=60){tCtx.beginPath();tCtx.moveTo(0,y);tCtx.lineTo(W,y);tCtx.stroke();}
+  const zones=[{l:'FLIGHT & AUTONOMY',x:0.04,y:0.09,c:'flight'},{l:'PERCEPTION & AI',x:0.52,y:0.08,c:'ai'},{l:'HARDWARE',x:0.04,y:0.96,c:'hardware'},{l:'SIMULATION',x:0.72,y:0.96,c:'tools'}];
+  zones.forEach(z=>{tCtx.font='9px "Share Tech Mono",monospace';tCtx.textAlign='left';tCtx.fillStyle=cats[z.c].color+'40';tCtx.fillText(z.l,z.x*W,z.y*H);});
+  const cIds=new Set();if(hovN){cIds.add(hovN.id);edges.forEach(([a,b])=>{if(a===hovN.id)cIds.add(b);if(b===hovN.id)cIds.add(a);});}
+  edges.forEach(([aId,bId])=>{
+    const a=pos.find(n=>n.id===aId),b=pos.find(n=>n.id===bId);if(!a||!b)return;
+    const isH=hovN&&cIds.has(aId)&&cIds.has(bId),isFd=hovN&&!isH;
+    tCtx.beginPath();tCtx.moveTo(a.x,a.y);tCtx.lineTo(b.x,b.y);
+    if(isH){tCtx.strokeStyle='rgba(0,200,255,0.6)';tCtx.lineWidth=1.5;tCtx.setLineDash([4,4]);tCtx.lineDashOffset=-(tFr*.5);}
+    else{tCtx.strokeStyle=isFd?'rgba(0,200,255,0.03)':'rgba(0,200,255,0.11)';tCtx.lineWidth=1;tCtx.setLineDash([]);}
+    tCtx.stroke();tCtx.setLineDash([]);
+    if(isH){const t=(Math.sin(tFr*.04)*.5+.5);const mx=a.x+(b.x-a.x)*t,my=a.y+(b.y-a.y)*t;tCtx.beginPath();tCtx.arc(mx,my,2,0,Math.PI*2);tCtx.fillStyle='#00c8ff';tCtx.fill();}
+  });
+  pos.forEach(n=>{
+    n.pulse+=.025;const cat=cats[n.cat],col=cat.color;
+    const isH=hovN?.id===n.id,isC=hovN&&cIds.has(n.id)&&!isH,isFd=hovN&&!cIds.has(n.id);
+    const pSz=isH?n.r*1.4:n.r+Math.sin(n.pulse)*.8;
+    tCtx.globalAlpha=isFd?.2:1;
+    const gR=pSz+(isH?14:6),grd=tCtx.createRadialGradient(n.x,n.y,pSz,n.x,n.y,gR);
+    grd.addColorStop(0,col+(isH?'60':'22'));grd.addColorStop(1,col+'00');
+    tCtx.beginPath();tCtx.arc(n.x,n.y,gR,0,Math.PI*2);tCtx.fillStyle=grd;tCtx.fill();
+    tCtx.beginPath();tCtx.arc(n.x,n.y,pSz,0,Math.PI*2);tCtx.fillStyle=isH?col+'cc':(isC?col+'55':'#060f18');tCtx.fill();
+    tCtx.strokeStyle=col+(isFd?'33':'cc');tCtx.lineWidth=isH?2:1;tCtx.stroke();
+    tCtx.beginPath();tCtx.arc(n.x,n.y,pSz*(n.level/100),0,Math.PI*2);tCtx.fillStyle=col+(isFd?'15':(isH?'55':'22'));tCtx.fill();
+    if(!isFd||!hovN){tCtx.font=`${isH?11:9.5}px "Share Tech Mono",monospace`;tCtx.textAlign='center';tCtx.fillStyle=isH?col:(isFd?col+'44':col+'bb');tCtx.fillText(n.label,n.x,n.y+pSz+13);}
+    if(isH){tCtx.font='8px "Share Tech Mono",monospace';tCtx.fillStyle=col+'cc';tCtx.fillText(n.level+'%',n.x,n.y+4);}
+    tCtx.globalAlpha=1;
+  });
+  requestAnimationFrame(drawTech);
+}
+drawTech();
+tCv.addEventListener('mousemove',e=>{
+  const rc=tCv.getBoundingClientRect(),sx=tCv.width/rc.width,sy=tCv.height/rc.height;
+  const mx=(e.clientX-rc.left)*sx,my=(e.clientY-rc.top)*sy;
+  hovN=null;pos.forEach(n=>{if(Math.hypot(mx-n.x,my-n.y)<n.r+10)hovN=n;});
+  if(hovN){tCv.style.cursor='pointer';ttEl.style.display='block';ttEl.style.left=(e.clientX+14)+'px';ttEl.style.top=(e.clientY-10)+'px';document.getElementById('tnName').textContent=hovN.label;document.getElementById('tnCat').textContent=cats[hovN.cat].label;const b='█'.repeat(Math.round(hovN.level/10))+'░'.repeat(10-Math.round(hovN.level/10));document.getElementById('tnLevel').style.color=cats[hovN.cat].color;document.getElementById('tnLevel').textContent=`${b} ${hovN.level}%`;}
+  else{tCv.style.cursor='crosshair';ttEl.style.display='none';}
+});
+tCv.addEventListener('mouseleave',()=>{ttEl.style.display='none';hovN=null;});
+</script>
+</body>
+</html>
