@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkets_portfolio=globalThis.webpackChunkets_portfolio||[]).push([[1903],{1912(o){o.exports=JSON.parse('{"blogBasePath":"/ets_portfolio/blog","blogTitle":"Blog","authorsListPath":"/ets_portfolio/blog/authors"}')}}]);
