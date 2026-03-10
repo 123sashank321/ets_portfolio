@@ -365,7 +365,7 @@ export default function Home() {
           <div className="hero-cta">
             <a href="#projects" className="btn-hud">View Projects</a>
             <a href="#contact" className="btn-hud btn-hud-amber">Get In Touch</a>
-            <a href="/ets_portfolio/Resume_1.pdf" download className="btn-hud btn-hud-ghost">↓ Download CV</a>
+            <a href="/ets_portfolio/Sashank_Erukala.pdf" download className="btn-hud btn-hud-ghost">↓ Download CV</a>
           </div>
         </div>
         <div className="hero-right">
