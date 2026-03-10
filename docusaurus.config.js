@@ -94,7 +94,7 @@ async function createConfig() {
             { href: '/#certs', label: 'Achievements', position: 'left' },
             { href: '/#contact', label: 'Contact', position: 'left' },
             {
-              href: '/Resume_1.pdf',
+              href: '/ets_portfolio/Sashank_Erukala.pdf',
               label: '↓ CV',
               position: 'right',
               className: 'nav-cv-btn',
